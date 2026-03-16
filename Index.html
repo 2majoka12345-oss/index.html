@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI Assistant</title>
+    <style>
+        body { background: #000; color: #00d2ff; font-family: 'Courier New', Courier, monospace; text-align: center; padding-top: 50px; }
+        .circle { border: 5px solid #00d2ff; border-radius: 50%; width: 150px; height: 150px; margin: 0 auto; box-shadow: 0 0 20px #00d2ff; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
+        #status { margin-top: 20px; font-size: 1.2em; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="circle"></div>
+    <h1>JARVIS</h1>
+    <div id="status">Say "Hey Jarvis" to Wake Me Up</div>
+
+    <script>
+        const statusText = document.getElementById('status');
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const synth = window.speechSynthesis;
+
+        recognition.continuous = true;
+        recognition.lang = 'en-US';
+
+        function speak(text) {
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.onend = () => { if(text.includes("Allah Hafiz")) location.reload(); };
+            synth.speak(utter);
+        }
+
+        recognition.onresult = (event) => {
+            const result = event.results[event.results.length - 1][0].transcript.toLowerCase();
+            statusText.innerText = "You said: " + result;
+
+            // 1. WAKE WORD
+            if (result.includes("hey jarvis") || result.includes("jarvis")) {
+                speak("Yes Sir, I am listening.");
+            }
+
+            // 2. TIME
+            if (result.includes("time")) {
+                const time = new Date().toLocaleTimeString();
+                speak("Sir, the time is " + time);
+            }
+
+            // 3. DATE
+            if (result.includes("date")) {
+                const date = new Date().toDateString();
+                speak("Today is " + date);
+            }
+
+            // 4. REMINDER (Simplified for JS)
+            if (result.includes("remind me")) {
+                speak("What should I remind you?");
+                recognition.onresult = (e2) => {
+                    const task = e2.results[e2.results.length - 1][0].transcript;
+                    speak("In how many seconds?");
+                    recognition.onresult = (e3) => {
+                        const secs = parseInt(e3.results[e3.results.length - 1][0].transcript.replace(/\D/g, ''));
+                        speak(`Set for ${secs} seconds.`);
+                        setTimeout(() => {
+                            speak(`Reminder Sir! You said: ${task}`);
+                            alert("REMINDER: " + task);
+                        }, secs * 1000);
+                        // Reset recognition to main loop
+                        startJarvis();
+                    };
+                };
+            }
+
+            // 5. STOP / EXIT
+            if (result.includes("stop") || result.includes("bye")) {
+                speak("Theek hai sir, Allah Hafiz!");
+                recognition.stop();
+            }
+        };
+
+        function startJarvis() {
+            recognition.start();
+        }
+
+        // Click screen to start (Browser security requirement)
+        document.body.onclick = () => {
+            startJarvis();
+            statusText.innerText = "Jarvis Active. Try saying something.";
+        };
+    </script>
+</body>
+</html>
